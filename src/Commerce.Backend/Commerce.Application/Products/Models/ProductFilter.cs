@@ -4,6 +4,12 @@ namespace Commerce.Application.Products.Models;
 
 public class ProductFilter : FilterPagination
 {
+    public float? MinimumPrice { get; set; }
+    public float? MaximumPrice { get; set; }
+
+    public IReadOnlyCollection<Guid> ProductManufacturerIds { get; init; } = [];
+    public IReadOnlyCollection<Guid> SectionIds { get; init; } = [];
+    public IReadOnlyCollection<Guid> CategoryIds { get; init; } = [];
     public override int GetHashCode()
     {
         var hashCode = new HashCode();

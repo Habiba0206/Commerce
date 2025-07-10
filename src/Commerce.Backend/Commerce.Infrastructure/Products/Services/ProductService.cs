@@ -20,9 +20,9 @@ public class ProductService(
         repository.Get(predicate, queryOptions);
 
     public IQueryable<Product> Get(
-        ProductFilter filter, 
+        ProductFilter filter,
         QueryOptions queryOptions = default) =>
-        repository.Get(queryOptions: queryOptions).ApplyPagination(filter);
+    ApplyFilter(repository.Get(queryOptions: queryOptions), filter).ApplyPagination(filter); 
 
     public ValueTask<Product?> GetByIdAsync(
         Guid id, 
@@ -121,4 +121,27 @@ public class ProductService(
         CommandOptions commandOptions = default, 
         CancellationToken cancellationToken = default) =>
         repository.DeleteByIdAsync(id, commandOptions, cancellationToken);
+
+    private IQueryable<Product> ApplyFilter(
+    IQueryable<Product> query,
+    ProductFilter filter)
+    {
+        if (filter.MinimumPrice.HasValue)
+            query = query.Where(p => p.Price >= filter.MinimumPrice.Value);
+
+        if (filter.MaximumPrice.HasValue)
+            query = query.Where(p => p.Price <= filter.MaximumPrice.Value);
+
+        if (filter.ProductManufacturerIds.Any())
+            query = query.Where(p => filter.ProductManufacturerIds.Contains(p.ProductManufacturerId));
+
+        if (filter.SectionIds.Any())
+            query = query.Where(p => filter.SectionIds.Contains(p.SectionId));
+
+        if (filter.CategoryIds.Any())
+            query = query.Where(p => filter.CategoryIds.Contains(p.CategoryId));
+
+        return query;
+    }
+
 }
