@@ -211,6 +211,7 @@ public abstract class EntityRepositoryBase<TEntity, TContext>(
         _ = foundEntity ?? throw new NotFoundException(typeof(TEntity).Name, entity.Id);
 
         entity.IsDeleted = true;
+        entity.DeletedTime = DateTime.UtcNow;
 
         DbContext.Set<TEntity>().Update(entity);
 
@@ -242,11 +243,64 @@ public abstract class EntityRepositoryBase<TEntity, TContext>(
             ?? throw new NotFoundException(typeof(TEntity).Name, id);
 
         entity.IsDeleted = true;
+        entity.DeletedTime = DateTime.UtcNow;
 
         DbContext.Set<TEntity>().Update(entity);
 
         if (cacheEntryOptions is not null)
             await cacheBroker.SetAsync(entity.Id.ToString(), entity, cacheEntryOptions, cancellationToken);
+
+        if (!commandOptions.SkipSaveChanges)
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+        return entity;
+    }
+
+    /// <summary>
+    /// Asynchronously deletes a entity in repository.
+    /// </summary>
+    /// <param name="entity"></param>
+    /// <param name="commandOptions"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async ValueTask<TEntity?> HardDeleteAsync(
+        TEntity entity,
+        CommandOptions commandOptions = default,
+        CancellationToken cancellationToken = default)
+    {
+        DbContext.Set<TEntity>().Remove(entity);
+
+        if (cacheEntryOptions is not null)
+            await cacheBroker.DeleteAsync(entity.Id.ToString(), cancellationToken);
+
+        if (!commandOptions.SkipSaveChanges)
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+        return entity;
+    }
+
+    /// <summary>
+    /// Asynchronously deletes an existing entity in repository by its id.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="commandOptions"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public async ValueTask<TEntity?> HardDeleteByIdAsync(
+        Guid id,
+        CommandOptions commandOptions = default,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await DbContext
+            .Set<TEntity>()
+            .FirstOrDefaultAsync(entity => entity.Id == id, cancellationToken)
+            ?? throw new InvalidOperationException();
+
+        DbContext.Remove(entity);
+
+        if (cacheEntryOptions is not null)
+            await cacheBroker.DeleteAsync(entity.Id.ToString(), cancellationToken);
 
         if (!commandOptions.SkipSaveChanges)
             await dbContext.SaveChangesAsync(cancellationToken);

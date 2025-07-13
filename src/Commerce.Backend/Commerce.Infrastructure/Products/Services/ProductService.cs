@@ -124,8 +124,10 @@ public class ProductService(
 
     private IQueryable<Product> ApplyFilter(
     IQueryable<Product> query,
-    ProductFilter filter)
+    ProductFilter? filter)
     {
+        if (filter is null) return query;
+
         if (filter.MinimumPrice.HasValue)
             query = query.Where(p => p.Price >= filter.MinimumPrice.Value);
 

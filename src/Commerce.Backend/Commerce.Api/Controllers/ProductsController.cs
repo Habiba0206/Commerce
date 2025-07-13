@@ -100,6 +100,35 @@ public class ProductsController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
+    /// Soft-deletes multiple entities by their IDs.
+    /// </summary>
+    /// <param name="command">
+    /// The <see cref="DeleteByIdsCommand"/> containing a list of entity IDs to be deleted.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// A cancellation token to cancel the operation if needed.
+    /// </param>
+    /// <remarks>
+    /// This endpoint performs a soft delete by setting <c>IsDeleted = true</c> for each entity.
+    /// </remarks>
+    /// <response code="200">
+    /// The entities were successfully marked as deleted.
+    /// </response>
+    /// <response code="400">
+    /// One or more IDs were invalid or missing.
+    /// </response>
+    [HttpDelete("batch")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteMany(
+        [FromBody] ProductDeleteManyCommand command,
+        CancellationToken ct = default)
+    {
+        var deletedCount = await mediator.Send(command, ct);
+        return Ok(deletedCount);            
+    }
+
+    /// <summary>
     /// Uploads a preview image for a product and returns the file URL.
     /// </summary>
     /// <param name="uploadService">The file upload service (injected).</param>

@@ -14,6 +14,11 @@ public class ProductGetByIdQueryHandler(
     public async Task<ProductGetDto> Handle(ProductGetByIdQuery request, CancellationToken cancellationToken)
     {
         var result = await service.GetByIdAsync(request.ProductId, cancellationToken: cancellationToken);
+
+        result.Views += 1;
+
+        await service.UpdateAsync(result);
+
         return mapper.Map<ProductGetDto>(result);
     }
 }

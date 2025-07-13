@@ -35,6 +35,9 @@ using Commerce.Infrastructure.Countries.Services;
 using Commerce.Infrastructure.Categories.Services;
 using Commerce.Api.Behaviours;
 using Commerce.Api.Middlewares;
+using Commerce.Application.Statistics.Services;
+using Commerce.Infrastructure.Statistics.Services;
+using Commerce.Api.Data;
 
 namespace Commerce.Api.Configurations;
 
@@ -151,7 +154,11 @@ public static partial class HostConfiguration
             .AddScoped<IProductManufacturerService, ProductManufacturerService>()
             .AddScoped<ISaleService, SaleService>()
             .AddScoped<ISectionService, SectionService>()
-            .AddScoped<IFileUploadService, FileUploadService>();
+            .AddScoped<IFileUploadService, FileUploadService>()
+            .AddScoped<IStatisticsService, StatisticsService>();
+
+        //registering background service
+        builder.Services.AddHostedService<HardDeleteBackgroundService>();
 
         return builder;
     }
@@ -187,28 +194,28 @@ public static partial class HostConfiguration
         return builder;
     }
 
-    //private static async ValueTask<WebApplication> SeedDataAsync(this WebApplication app)
-    //{
-    //    var serviceScope = app.Services.CreateScope();
-    //    await serviceScope.ServiceProvider.InitializeSeedAsync();
+    private static async ValueTask<WebApplication> SeedDataAsync(this WebApplication app)
+    {
+        var serviceScope = app.Services.CreateScope();
+        await serviceScope.ServiceProvider.InitializeSeedAsync();
 
-    //    return app;
-    //}
+        return app;
+    }
 
     private static WebApplicationBuilder AddDevTools(this WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
-            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            options.IncludeXmlComments(xmlPath);
-
             options.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "Commerce Api",
                 Version = "v1"
             });
+
+            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            options.IncludeXmlComments(xmlPath);
         });
 
         return builder;

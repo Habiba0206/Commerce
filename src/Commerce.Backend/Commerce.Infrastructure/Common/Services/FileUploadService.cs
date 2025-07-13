@@ -17,7 +17,7 @@ public class FileUploadService : IFileUploadService
 
     public async ValueTask<string> UploadImageAsync(IFormFile file)
     {
-        var uploadsPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "blocks");
+        var uploadsPath = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "products");
         Directory.CreateDirectory(uploadsPath);
 
         var fileExt = Path.GetExtension(file.FileName);
